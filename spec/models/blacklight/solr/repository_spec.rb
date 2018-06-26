@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 RSpec.describe Blacklight::Solr::Repository do
-
   let :blacklight_config do
     CatalogController.blacklight_config.deep_copy
   end
@@ -94,12 +93,12 @@ RSpec.describe Blacklight::Solr::Repository do
       allow(subject.connection).to receive(:send_and_receive).with('select', hash_including(params: { qt: 'abc'})).and_return(mock_response)
       expect(subject.search({qt: 'abc'})).to be_a_kind_of Blacklight::Solr::Response
     end
-    
+
     it "should preserve the class of the incoming params" do
       search_params = ActiveSupport::HashWithIndifferentAccess.new
       search_params[:q] = "query"
       allow(subject.connection).to receive(:send_and_receive).with('select', anything).and_return(mock_response)
-      
+
       response = subject.search(search_params)
       expect(response).to be_a_kind_of Blacklight::Solr::Response
       expect(response.params).to be_a_kind_of ActiveSupport::HashWithIndifferentAccess
@@ -107,6 +106,11 @@ RSpec.describe Blacklight::Solr::Repository do
   end
 
   describe "#send_and_receive" do
+    it "raises a Blacklight exception if RSolr can't connect to the Solr instance" do
+      allow(subject.connection).to receive(:send_and_receive).and_raise(Errno::ECONNREFUSED)
+      expect { subject.search }.to raise_exception(/Unable to connect to Solr instance/)
+    end
+
     describe "http_method configuration" do
       describe "using default" do
 
@@ -145,6 +149,4 @@ RSpec.describe Blacklight::Solr::Repository do
       expect(response.docs.length).to be >= 1
     end
   end
-
-
 end

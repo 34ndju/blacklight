@@ -12,7 +12,7 @@ end
 json.data do
   json.array! @presenter.documents do |document|
     json.id document.id
-    json.attributes document
+    json.attributes(document.attributes.reject { |_, v| v.nil? }.except(:created_at, :updated_at))
     json.links do
       json.self polymorphic_url(url_for_document(document))
     end

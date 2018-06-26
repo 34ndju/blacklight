@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 RSpec.describe "catalog/index.json", api: true do
+  let(:document_model) { respond_to?(:solr_document_path) ? SolrDocument : ElasticsearchDocument }
   let(:response) { instance_double(Blacklight::Solr::Response, documents: docs, prev_page: nil, next_page: 2, total_pages: 3) }
-  let(:docs) { [SolrDocument.new(id: '123', title_tsim: 'Book1'), SolrDocument.new(id: '456', title_tsim: 'Book2')] }
+  let(:doc1) { document_model.new(id: '123', title_tsim: 'Book1') }
+  let(:doc2) { document_model.new(id: '456', title_tsim: 'Book2') }
+  let(:docs) { [doc1, doc2] }
   let(:facets) { double("facets") }
   let(:config) { Blacklight::Configuration.new }
   let(:presenter) { Blacklight::JsonPresenter.new(response, facets, config) }
@@ -13,6 +16,9 @@ RSpec.describe "catalog/index.json", api: true do
   end
 
   before do
+    allow(doc1).to receive(:persisted?).and_return(true)
+    allow(doc2).to receive(:persisted?).and_return(true)
+
     allow(view).to receive(:blacklight_config).and_return(config)
     allow(view).to receive(:search_action_path).and_return('http://test.host/some/search/url')
     allow(view).to receive(:search_facet_path).and_return('http://test.host/some/facet/url')
